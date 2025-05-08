@@ -17,23 +17,37 @@ jobs:
         with:
           go-version: 1.20
 
+      - name: Print versions
+        run: |
+          go version
+          docker --version || echo "Docker not installed"
+          docker-compose --version || echo "Docker Compose not installed"
+
       - name: Install dependencies
         run: go mod download
 
-      - name: Run tests (skip if none)
-        run: go test ./... || echo "No tests found"
+      - name: Run tests (if any)
+        run: |
+          if ls *_test.go 1> /dev/null 2>&1; then
+            go test ./...
+          else
+            echo "No tests found"
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
         run: docker build -t my-go-app .
 
-      - name: Deploy to VPS
+      - name: Copy project files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
-          source: "docker-compose.yml"
+          source: "."  # копируем все, включая Dockerfile, docker-compose.yml и исходники
           target: "~/go-app"
 
       - name: SSH and restart docker-compose
@@ -45,5 +59,5 @@ jobs:
           port: 22
           script: |
             cd ~/go-app
-            docker-compose down
+            docker-compose pull
             docker-compose up -d --build

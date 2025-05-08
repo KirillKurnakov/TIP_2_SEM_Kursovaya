@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main ]  # запускается при пуше в main
 
+
 jobs:
   build-test-deploy:
     runs-on: ubuntu-latest

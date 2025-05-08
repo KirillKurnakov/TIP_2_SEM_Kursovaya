@@ -1,0 +1,362 @@
+basePath: /
+definitions:
+  main.Credentials:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  main.Item:
+    properties:
+      category_id:
+        type: string
+      description:
+        type: string
+      item_id:
+        type: string
+      name:
+        type: string
+      price:
+        type: integer
+      quantitystock:
+        type: integer
+    type: object
+  main.OrderItem:
+    properties:
+      item_id:
+        type: string
+      order_id:
+        type: string
+      orderitem_id:
+        type: string
+      package_id:
+        type: string
+      quantity:
+        type: integer
+      quantity_package:
+        type: integer
+      sum_price_item:
+        type: integer
+      sum_price_package:
+        type: number
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Это API для интернет-магазина мягких игрушек
+  title: Bakery API
+  version: "1.0"
+paths:
+  /id/1/basket:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of items in the basket for the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of items in the basket
+          schema:
+            items:
+              $ref: '#/definitions/main.OrderItem'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - TokenAuth: []
+      summary: Get Basket Items
+      tags:
+      - basket
+    post:
+      consumes:
+      - application/json
+      description: Add a new item to the user's basket
+      parameters:
+      - description: Basket item
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/main.OrderItem'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Item added to basket successfully
+          schema:
+            $ref: '#/definitions/main.OrderItem'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to add item to basket
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - TokenAuth: []
+      summary: Add To Basket
+      tags:
+      - basket
+  /id/1/basket/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a item from the user's basket
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - TokenAuth: []
+      summary: Delete From Basket
+      tags:
+      - basket
+  /items:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of products with pagination, sorting, and filtering
+        options
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Limit per page
+        in: query
+        name: limit
+        type: integer
+      - description: Product name
+        in: query
+        name: name
+        type: string
+      - description: Product category
+        in: query
+        name: category_id
+        type: string
+      - description: Sort by field (e.g., field_name:asc or field_name:desc)
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - TokenAuth: []
+      summary: getItems
+      tags:
+      - items
+    post:
+      consumes:
+      - application/json
+      description: Add a new item to the stock
+      parameters:
+      - description: New item details
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/main.Item'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Item created successfully
+          schema:
+            $ref: '#/definitions/main.Item'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - TokenAuth: []
+      summary: Create item
+      tags:
+      - items
+  /items/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a item from the catalog by its ID
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message indicating successful deletion
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Item not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - TokenAuth: []
+      summary: Delete Item
+      tags:
+      - items
+    get:
+      consumes:
+      - application/json
+      description: Get a single item by its ID
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Item'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - TokenAuth: []
+      summary: Get Item by ID
+      tags:
+      - items
+    put:
+      consumes:
+      - application/json
+      description: Update an existing item by its ID
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated item
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/main.Item'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated item details
+          schema:
+            $ref: '#/definitions/main.Item'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Item not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - TokenAuth: []
+      summary: Обновление товара
+      tags:
+      - items
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Logs in a user and returns access and refresh tokens
+      parameters:
+      - description: Данные для входа
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/main.Credentials'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"accesstoken": "string", "refreshtoken": "string"}'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: '{"message": "string"}'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: '{"message": "string"}'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - TokenAuth: []
+      summary: login
+      tags:
+      - auth
+securityDefinitions:
+  TokenAuth:
+    description: Введите ваш токен напрямую в заголовке Authorization
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -39,7 +39,9 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
-          source: "."
+          source: |
+            docker-compose.yml
+            Dockerfile
           target: "~/go-app"
 
       # Шаг 6: SSH и деплой через Docker Compose

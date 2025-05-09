@@ -37,5 +37,15 @@ jobs:
           port: 22
           script: |
             cd ~/go-app
+
+            # ✅ Создаём папку для бэкапов, если нет
+            mkdir -p ~/db_backups
+
+            # 📦 Делаем дамп базы данных в файл с таймштампом
+            docker exec $(docker ps -qf "name=db") pg_dump -U postgres tipOnlineShop > ~/db_backups/backup_$(date +"%Y%m%d_%H%M%S").sql
+
+            # 🧹 Останавливаем текущие контейнеры
             docker-compose down
+
+            # 🚀 Запускаем с пересборкой
             docker-compose up -d --build

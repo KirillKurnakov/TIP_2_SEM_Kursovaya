@@ -15,6 +15,7 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t my-go-app .
+        working-directory: .
 
       - name: Run tests inside container
         run: docker run --rm my-go-app go test ./... || echo "No tests found"
@@ -28,8 +29,6 @@ jobs:
           port: 22
           source: "docker-compose.yml"
           target: "~/go-app"
-
-
 
       - name: SSH and deploy via docker-compose
         uses: appleboy/ssh-action@master

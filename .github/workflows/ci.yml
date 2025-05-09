@@ -70,11 +70,5 @@ jobs:
             # Запускаем app
             docker-compose up -d app
 
-            # Запускаем app
-            docker-compose up -d app
-
-            # Запускаем app
-            docker-compose up -d app
-
             # Запускаем с пересборкой
-            # docker-compose up -d --build
+            docker-compose up -d --build

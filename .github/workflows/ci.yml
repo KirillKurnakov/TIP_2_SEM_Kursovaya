@@ -14,13 +14,16 @@ jobs:
         uses: actions/checkout@v3
 
       # Шаг 2: Установка Docker и Docker Compose
-      - name: Set up Docker Buildx
+      - name: Set up Docker
         uses: docker/setup-buildx-action@v2
 
-      - name: Set up Docker Compose
-        uses: docker/setup-qemu-action@v2
+      - name: Install Docker Compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose --version  # Проверка, что Docker Compose установлен
 
-      # Шаг 3: Запуск сборки Docker Compose
+      # Шаг 3: Сборка Docker-образов с помощью Docker Compose
       - name: Build and push Docker images using Docker Compose
         run: docker-compose -f docker-compose.yml build
 

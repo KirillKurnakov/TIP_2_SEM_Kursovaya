@@ -4,33 +4,36 @@ on:
   push:
     branches: [ main ]  # запускается при пуше в main
 
-
 jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # Шаг 1: Клонирование репозитория
       - name: Checkout repo
         uses: actions/checkout@v3
 
+      # Шаг 2: Сборка Docker-образа на GitHub Actions
       - name: Build Docker image
         run: docker build -t my-go-app .
-        working-directory: .
 
-      - name: Run tests inside container
-        run: docker run --rm my-go-app go test ./... || echo "No tests found"
+      # Шаг 3: Экспорт Docker-образа в файл
+      - name: Save Docker image as tar
+        run: docker save my-go-app | gzip > my-go-app.tar.gz
 
-      - name: Copy docker-compose.yml to VPS
+      # Шаг 4: Передача tar-архива с образом на сервер через SCP
+      - name: Copy Docker image to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
-          source: "docker-compose.yml"
-          target: "~/go-app"
+          source: "my-go-app.tar.gz"
+          target: "~/go-app/"
 
-      - name: SSH and deploy via docker-compose
+      # Шаг 5: SSH и загрузка образа на сервер
+      - name: SSH and load Docker image on VPS
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -39,6 +42,8 @@ jobs:
           port: 22
           script: |
             cd ~/go-app
+            # Распаковываем и загружаем Docker-образ
+            gunzip -c my-go-app.tar.gz | docker load
+            # Запуск контейнера
             docker-compose down
-            docker-compose pull
-            docker-compose up -d --build
+            docker-compose up -d

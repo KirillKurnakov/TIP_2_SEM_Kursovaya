@@ -30,6 +30,7 @@ jobs:
           target: "~/go-app"
 
 
+
       - name: SSH and deploy via docker-compose
         uses: appleboy/ssh-action@master
         with:

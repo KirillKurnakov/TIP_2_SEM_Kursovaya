@@ -31,4 +31,3 @@ services:
       DB_PORT: "5432"     # Важно: строкой, чтобы избежать парсинга как число
     ports:
       - "8080:8080"
-    command: ["./wait-for-it.sh", "db:5432", "--", "go", "run", "main.go"]

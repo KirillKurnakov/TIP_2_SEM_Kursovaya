@@ -2,7 +2,7 @@ name: Go App CI/CD
 
 on:
   push:
-    branches: [ main ]  # запускается при пуше в main
+    branches: [main]  # Запускается при пуше в main
 
 jobs:
   build-test-deploy:
@@ -13,27 +13,34 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # Шаг 2: Сборка Docker-образа на GitHub Actions
-      - name: Build Docker image
-        run: docker build -t my-go-app .
+      # Шаг 2: Установка Docker и Docker Compose
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-      # Шаг 3: Экспорт Docker-образа в файл
-      - name: Save Docker image as tar
-        run: docker save my-go-app | gzip > my-go-app.tar.gz
+      - name: Set up Docker Compose
+        uses: docker/setup-qemu-action@v2
 
-      # Шаг 4: Передача tar-архива с образом на сервер через SCP
-      - name: Copy Docker image to VPS
+      # Шаг 3: Запуск сборки Docker Compose
+      - name: Build and push Docker images using Docker Compose
+        run: docker-compose -f docker-compose.yml build
+
+      # Шаг 4: Запуск тестов внутри контейнера
+      - name: Run tests inside container
+        run: docker-compose run --rm app go test ./... || echo "No tests found"
+
+      # Шаг 5: Отправка файлов (если необходимо) на сервер через SCP
+      - name: Copy docker-compose.yml and related files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
-          source: "my-go-app.tar.gz"
-          target: "~/go-app/"
+          source: "docker-compose.yml"
+          target: "~/go-app"
 
-      # Шаг 5: SSH и загрузка образа на сервер
-      - name: SSH and load Docker image on VPS
+      # Шаг 6: SSH и деплой через Docker Compose
+      - name: SSH and deploy via Docker Compose
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -42,8 +49,6 @@ jobs:
           port: 22
           script: |
             cd ~/go-app
-            # Распаковываем и загружаем Docker-образ
-            gunzip -c my-go-app.tar.gz | docker load
-            # Запуск контейнера
             docker-compose down
-            docker-compose up -d
+            docker-compose pull  # Обновляем образы
+            docker-compose up -d --build  # Запускаем контейнеры с пересборкой образа

@@ -2,7 +2,7 @@ name: Go App CI/CD
 
 on:
   push:
-    branches: [main]  # Запускается при пуше в main
+    branches: [ main ]  # запускается при пуше в main
 
 jobs:
   build-test-deploy:
@@ -13,40 +13,33 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # Шаг 2: Установка Docker и Docker Compose
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
-
-
+      # Шаг 2: Установка Docker Compose
       - name: Install Docker Compose
         run: |
           sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
-          docker-compose --version  # Проверка, что Docker Compose установлен
 
-      # Шаг 3: Сборка Docker-образов с помощью Docker Compose
-      - name: Build and push Docker images using Docker Compose
-        run: docker-compose -f docker-compose.yml build
+      # Шаг 3: Сборка Docker-образов с использованием docker-compose
+      - name: Build Docker images with docker-compose
+        run: docker-compose build
 
       # Шаг 4: Запуск тестов внутри контейнера
       - name: Run tests inside container
-        run: docker-compose run --rm app go test ./... || echo "No tests found"
+        run: docker-compose run --rm app go test ./...
 
-      # Шаг 5: Отправка файлов (если необходимо) на сервер через SCP
-      - name: Copy docker-compose.yml and related files to VPS
+      # Шаг 5: Передача docker-compose.yml на VPS через SCP
+      - name: Copy docker-compose.yml to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
-          source: |
-            docker-compose.yml
-            Dockerfile
-          target: "~/go-app"
+          source: "docker-compose.yml"
+          target: "~/go-app/"
 
-      # Шаг 6: SSH и деплой через Docker Compose
-      - name: SSH and deploy via Docker Compose
+      # Шаг 6: SSH и развертывание приложения через docker-compose
+      - name: SSH and deploy via docker-compose
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -55,6 +48,9 @@ jobs:
           port: 22
           script: |
             cd ~/go-app
+            # Останавливаем старые контейнеры
             docker-compose down
-            docker-compose pull  # Обновляем образы
-            docker-compose up -d --build  # Запускаем контейнеры с пересборкой образа
+            # Стягиваем последние изменения (если есть)
+            docker-compose pull
+            # Запускаем контейнеры
+            docker-compose up -d --build

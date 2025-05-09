@@ -1,5 +1,5 @@
 # Этап сборки: используем официальный образ Go
-FROM golang:1.24.2-alpine AS builder
+FROM golang:1.24.3-alpine AS builder
 
 # Установим рабочую директорию
 WORKDIR /app

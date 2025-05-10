@@ -246,8 +246,7 @@ func getItems(c *gin.Context) {
 	category_id := c.Query("category_id")
 
 	sort := c.Query("sort")
-
-
+	
 	pageInt, _ := strconv.Atoi(page)
 	limitInt, _ := strconv.Atoi(limit)
 

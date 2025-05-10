@@ -70,6 +70,18 @@ jobs:
             # Запускаем app
             docker-compose up -d app
 
+            # Принудительно перезапускаем app-контейнер (если уже был)
+            docker-compose rm -f app1 || true
+
+            # Запускаем app
+            docker-compose up -d app1
+
+            # Принудительно перезапускаем app-контейнер (если уже был)
+            docker-compose rm -f app2 || true
+
+            # Запускаем app
+            docker-compose up -d app2
+
             # Запускаем с пересборкой
             # docker-compose up -d --build
 

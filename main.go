@@ -8,9 +8,12 @@ import (
 	"fmt"
 
 	"main/tasks"
+	"main/config"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+
+	"github.com/sirupsen/logrus"
 
 	"log"
 
@@ -31,6 +34,8 @@ var db *gorm.DB
 
 // connect to DB postgreSQL
 func initDB() {
+	cfg := config.Load()
+	fmt.Printf("Port:", cfg.DBPort);
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
 		os.Getenv("DB_HOST"),
@@ -51,6 +56,8 @@ func initDB() {
 	// Миграция схемы
 	db.AutoMigrate(&Item{})
 	db.AutoMigrate(&OrderItem{})
+
+	log.Printf("База запущена успешно!");
 }
 
 
@@ -246,7 +253,7 @@ func getItems(c *gin.Context) {
 	category_id := c.Query("category_id")
 
 	sort := c.Query("sort")
-	
+
 	pageInt, _ := strconv.Atoi(page)
 	limitInt, _ := strconv.Atoi(limit)
 
@@ -484,6 +491,30 @@ func deleteItemBasket(c *gin.Context) {
 //	@name						Authorization
 //	@description				Введите ваш токен напрямую в заголовке Authorization
 func main() {
+
+	// Создаем новый логгер
+    log := logrus.New()
+
+    // Устанавливаем формат вывода (JSON или текст — на выбор)
+    log.SetFormatter(&logrus.JSONFormatter{}) // Можно заменить на &logrus.TextFormatter{}
+
+    // Устанавливаем уровень логирования
+    log.SetLevel(logrus.InfoLevel) // Будут выводиться Info, Warn, Error и выше
+
+    // Пытаемся открыть файл для записи логов
+    file, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+    if err == nil {
+        log.SetOutput(file) // Если файл открыт, пишем логи в него
+    } else {
+        log.Warn("Не удалось открыть файл логов, логирование в консоль")
+    }
+
+    // Примеры логов разных уровней
+    log.Info("Информационное сообщение")
+    log.Warn("Предупреждение")
+    log.Error("Ошибка")
+    // log.Debug("Отладочная информация") — не будет выведено, если уровень Info
+
 	//router := gin.Default()
 	initDB()
 	time.Sleep(10 * time.Second)

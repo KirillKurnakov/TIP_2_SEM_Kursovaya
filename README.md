@@ -1,16 +1,33 @@
 # Проект: Reverse Proxy на Nginx для Go-приложения 
-##      
-Описание 
+## Описание 
 В этом проекте реализована настройка Nginx как Reverse Proxy для Go
 приложения.  
 Включены балансировка нагрузки, безопасность и настройка HTTPS. 
-## 🛠 Технологии - Go - Nginx - Docker - Let's Encrypt (SSL) - Fail2Ban (защита от атак) 
-##      
-Структура проекта 
-├── nginx/ │ ├── default.conf # Основная конфигурация Nginx ├── app/ │ ├── 
-main.go # Простейший сервер Go ├── README.md ├── docker-compose.yaml ├── 
-.gitignore 
-Запуск проекта 
+## Технологии
+Go - Nginx - Docker - Let's Encrypt (SSL) - Fail2Ban (защита от атак)      
+## Структура проекта 
+.
+├── docker-compose.yml
+├── Dockerfile
+├── data
+├── docs
+│   ├── docs.go
+│   ├── swagger.json
+│   └── swagger.yaml
+├── fail2ban
+│   └── fail2ban.ini
+├── go.mod
+├── go.sum
+├── initdb
+│   └── tipOnlineShop.sql
+├── main.go
+├── nginx
+│   └── app.conf
+├── README.md
+├── tasks
+│   └── tasks.go
+└── wait-for-it.sh
+## Запуск проекта 
 1. Установить Docker и Docker Compose. 
 2. Склонировать репозиторий:  
 git clone <URL репозитория> 
@@ -18,21 +35,21 @@ cd project-name
 3. Запустить контейнеры:  
 docker-compose up -d 
 4. Проверить работу по адресу: http://localhost. 
-Безопасность 
+## Безопасность 
 o Ограничено число запросов (DDoS-защита) 
 o Настроены ограничения по IP-адресам 
 o Включен HTTPS через Let's Encrypt 
-Тестирование 
+## Тестирование 
 o Проверить доступность сервиса:  
-curl -I http://localhost 
+http://45.90.35.111 
 o Проверить балансировку нагрузки:  
-for i in {1..10}; do curl -s http://localhost | grep "Server ID"; done 
+for i in {1..10}; do curl -s http://45.90.35.111 | grep "Server ID"; done 
 o Проверить HTTPS:  
 curl -I https://example.com 
-Логи 
+## Логи 
 o Nginx access log: /var/log/nginx/access.log 
 o Nginx error log: /var/log/nginx/error.log 
-Выводы 
+## Выводы 
 В ходе работы были изучены и применены: 
 o Настройка Reverse Proxy на Nginx 
 o Балансировка нагрузки между экземплярами Go-приложения 

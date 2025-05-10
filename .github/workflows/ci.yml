@@ -51,6 +51,8 @@ jobs:
             # Перезапускаем Nginx
             sudo systemctl reload nginx
 
+            sudo cp ./fail2ban/fail2ban.ini /etc/fail2ban/jail.local
+
             # Останавливаем текущие контейнеры
             docker-compose down
 

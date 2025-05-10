@@ -44,6 +44,13 @@ jobs:
             # Делаем дамп базы данных в файл с таймштампом
             docker exec $(docker ps -qf "name=db") pg_dump -U postgres tipOnlineShop > ~/db_backups/backup_$(date +"%Y%m%d_%H%M%S").sql
 
+            # Обновляем nginx конфиг
+            cp ./nginx/app.conf /etc/nginx/sites-available/app
+            ln -sf /etc/nginx/sites-available/app /etc/nginx/sites-enabled/app
+
+            # Перезапускаем Nginx
+            systemctl reload nginx
+
             # Останавливаем текущие контейнеры
             docker-compose down
 

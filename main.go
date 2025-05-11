@@ -515,6 +515,7 @@ func main() {
     log.Error("Ошибка")
     // log.Debug("Отладочная информация") — не будет выведено, если уровень Info
 
+	
 	//router := gin.Default()
 	initDB()
 	time.Sleep(10 * time.Second)

@@ -12,6 +12,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/sirupsen/logrus"
 
@@ -56,6 +57,7 @@ func initDB() {
 	// Миграция схемы
 	db.AutoMigrate(&Item{})
 	db.AutoMigrate(&OrderItem{})
+	db.AutoMigrate(&User{})
 
 	log.Printf("База запущена успешно!");
 }
@@ -139,30 +141,82 @@ func initDB() {
                 return
             }
 
-            var validUser *Credentials
-				for _, user := range users {
-					if user.Username == creds.Username && user.Password == creds.Password {
-						validUser = &user
-						break
-					}
+			// Ищем пользователя по username
+			var user User
+			if err := db.Where("login = ?", creds.Username).First(&user).Error; err != nil {
+				if err == gorm.ErrRecordNotFound {
+					handleError(c, http.StatusUnauthorized, "User not found")
+				} else {
+					handleError(c, http.StatusInternalServerError, "Database error")
 				}
-
-			if validUser == nil {
-				//c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
-				handleError(c, http.StatusUnauthorized, "unauthorized")
 				return
 			}
 
-            accesstoken, refreshtoken, err := generateToken(creds.Username)
-            if err != nil {
-                //c.JSON(http.StatusInternalServerError, gin.H{"message": "could not create token"})
-                handleError(c, http.StatusInternalServerError, "could not create token")
+			// Сравниваем хешированный пароль
+			err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(creds.Password))
+			if err != nil {
+				handleError(c, http.StatusUnauthorized, "invalid credentials")
 				return
-            }
+			}
+
+			// Генерация токенов
+			accesstoken, refreshtoken, err := generateToken(creds.Username)
+			if err != nil {
+				handleError(c, http.StatusInternalServerError, "could not create token")
+				return
+			}
 
             //handleError(c, http.StatusOK, "invalid request")
 			c.JSON(http.StatusOK, gin.H{"accesstoken": accesstoken, "refreshtoken": refreshtoken})
         }
+
+			// Register godoc
+			// @Summary      Регистрация нового пользователя
+			// @Description  Регистрирует нового пользователя с уникальным логином и хешированным паролем
+			// @Tags         auth
+			// @Accept       json
+			// @Produce      json
+			// @Param        user  body      Credentials  true  "Данные для регистрации (логин и пароль)"
+			// @Success      201   {object}  map[string]string  "Пользователь успешно зарегистрирован"
+			// @Failure      400   {object}  map[string]string  "Некорректный формат запроса"
+			// @Failure      409   {object}  map[string]string  "Пользователь уже существует"
+			// @Failure      500   {object}  map[string]string  "Внутренняя ошибка сервера"
+			// @Router       /register [post]
+		func register(c *gin.Context) {
+			var creds Credentials
+			var user User
+			if err := c.BindJSON(&creds); err != nil {
+				handleError(c, http.StatusBadRequest, "invalid request")
+				return
+			}
+
+			if err := db.Where("login = ?", creds.Username).First(&user).Error; err != nil {
+				if err != gorm.ErrRecordNotFound {
+					handleError(c, http.StatusUnauthorized, "User already exists")
+					return
+				} 
+			}
+
+			// Хешируем пароль
+			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(creds.Password), bcrypt.DefaultCost)
+			if err != nil {
+				handleError(c, http.StatusInternalServerError, "Failed to hash password")
+				return
+			}
+
+			newUser := User{
+				Login: creds.Username,
+				Password: string(hashedPassword),
+				UsertypeID: "UT01",
+			}
+			if err := db.Create(&newUser).Error; err != nil {
+				handleError(c, http.StatusInternalServerError, "Login already exists")
+				return
+			}
+
+			// Можно сразу создать токены или просто сообщить об успешной регистрации
+			c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
+		}
 
         func authMiddleware() gin.HandlerFunc {
             return func(c *gin.Context) {
@@ -195,7 +249,7 @@ func initDB() {
 
 
 type Item struct {
-	Itemid        string  `gorm:"primaryKey;column:item_id" json:"item_id"`
+	//Itemid        string  `gorm:"primaryKey;column:item_id" json:"item_id"`
 	Name          string  `json:"name"`
 	Category_id   string  `json:"category_id"`
 	Description   string  `json:"description"`
@@ -204,14 +258,40 @@ type Item struct {
 }
 
 type OrderItem struct {
-	OrderItemid   string  `gorm:"primaryKey;column:orderitem_id" json:"orderitem_id"`
-	OrderId 	  string  `json:"order_id"`
-	Itemid        string  `json:"item_id"`
+	//OrderItemid   string  `gorm:"primaryKey;column:orderitem_id" json:"orderitem_id"`
+	OrderId 	  int  `json:"order_id"`
+	Itemid        int  `json:"item_id"`
 	Quantity 	  int	  `json:"quantity"`
 	SumPriceItem  int	  `json:"sum_price_item"`
 	PackageId	  string  `json:"package_id"`
 	QuantityPackage int   `json:"quantity_package"`
 	SumPricePackage float64	`json:"sum_price_package"`
+	UserId			int		`json:"user_id"`
+}
+
+type User struct {
+	//UserID     string `gorm:"primaryKey;column:user_id" json:"user_id"`
+	Name       string `gorm:"column:name" json:"name"`
+	Lastname   string `gorm:"column:lastname" json:"lastname"`
+	Surname    string `gorm:"column:surname" json:"surname"`
+	Email      string `gorm:"column:email" json:"email"`
+	Phone      string `gorm:"column:phone" json:"phone"`
+	UsertypeID string `gorm:"column:usertype_id" json:"usertype_id"`
+	Login	   string `gorm:"column:login" json:"login"`
+	Password   string `gorm:"column:password" json:"password"`
+}
+
+type Order struct {
+	OrderID         int     `gorm:"primaryKey;column:order_id" json:"order_id"`
+	UserID          string  `gorm:"column:user_id" json:"user_id"`
+	OrderDate       string  `gorm:"column:orderDate" json:"order_date"` // можно time.Time, если используешь time пакет
+	DeliveryTypeID  string  `gorm:"column:deliveryType_id" json:"delivery_type_id"`
+	AddressDelivery string  `gorm:"column:addressDelivery" json:"address_delivery"`
+	NumberKilometer float64 `gorm:"column:numberKilometer" json:"number_kilometer"`
+	DeliveryPrice   float64 `gorm:"column:deliveryPrice" json:"delivery_price"`
+	TimeDelivery    string  `gorm:"column:timeDelivery" json:"time_delivery"` // или time.Time если используешь TIME тип
+	FinalPrice      float64 `gorm:"column:finalPrice" json:"final_price"`
+	OrderStatusID   string  `gorm:"column:orderStatus_id" json:"order_status_id"`
 }
 
 
@@ -303,18 +383,31 @@ func getItems(c *gin.Context) {
 	})
 }
 
-//	@Summary		Get Basket Items
-//	@Description	Retrieve a list of items in the basket for the current user
-//	@Tags			basket
-//	@Accept			json
-//	@Produce		json
-//	@Security		TokenAuth
-//	@Success		200	{array}		OrderItem	"List of items in the basket"
-//	@Failure		500	{object}	string		"Internal Server Error"
-//	@Router			/id/1/basket [get]
+// getItemsBasket godoc
+// @Summary      Получить все позиции корзины пользователя
+// @Description  Возвращает список товаров в корзине по user_id
+// @Tags         basket
+// @Accept       json
+// @Produce      json
+// @Security	 TokenAuth
+// @Param        user_id  query     integer  true  "ID пользователя"
+// @Success      200      {array}   OrderItem
+// @Failure      400      {object}  map[string]string
+// @Failure      500      {object}  map[string]string
+// @Router       /basket/items [get]
 func getItemsBasket(c *gin.Context) {
+	userID := c.Query("user_id")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id is required"})
+		return
+	}
+
 	var itemsBasket []OrderItem
-	db.Find(&itemsBasket)
+	if err := db.Debug().Where("user_id = ?", userID).Find(&itemsBasket).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
+
 	c.JSON(http.StatusOK, itemsBasket)
 }
 
@@ -363,34 +456,54 @@ func createItem(c *gin.Context) {
 }
 
 //	@Summary		Add To Basket
-//	@Description	Add a new item to the user's basket
+//	@Description	Add a new item to the user's basket by user_id and item_id
 //	@Tags			basket
 //	@Accept			json
 //	@Produce		json
 //	@Security		TokenAuth
-//	@Param			item	body		OrderItem			true	"Basket item"
-//	@Success		201		{object}	OrderItem			"Item added to basket successfully"
-//	@Failure		400		{object}	map[string]string	"Invalid request"
-//	@Failure		500		{object}	map[string]string	"Failed to add item to basket"
-//	@Router			/id/1/basket [post]
+//	@Param			user_id1		query		integer				true	"User ID"
+//	@Param			item_id1		query		integer				true	"Item ID"
+//	@Param			item		body		OrderItem			true	"Basket item details (e.g., quantity)"
+//	@Success		201			{object}	OrderItem			"Item added to basket successfully"
+//	@Failure		400			{object}	map[string]string	"Invalid request"
+//	@Failure		500			{object}	map[string]string	"Failed to add item to basket"
+//	@Router			/basket [post]
 func createItemBasket(c *gin.Context) {
 	var newItem OrderItem
 
+	// Получаем user_id и item_id из URL-параметров
+	userIDStr := c.Query("user_id1")
+	itemIDStr := c.Query("item_id1")
+
 	if err := c.BindJSON(&newItem); err != nil {
 		handleError(c, http.StatusBadRequest, "invalid request")
-		//c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request"})
 		return
 	}
+
+	// Преобразуем в int
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		handleError(c, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	itemID, err := strconv.Atoi(itemIDStr)
+	if err != nil {
+		handleError(c, http.StatusBadRequest, "invalid item_id")
+		return
+	}
+
+	// Устанавливаем user_id и item_id из параметров в структуру
+	newItem.UserId = userID
+	newItem.Itemid = itemID
 
 	if err := db.Create(&newItem).Error; err != nil {
-		handleError(c, http.StatusInternalServerError, "failed to add item to basket")
-		//c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to add item to basket"})
+		handleError(c, http.StatusInternalServerError, "Failed to add item to basket")
 		return
 	}
 
-	c.JSON(http.StatusCreated, newItem)
+	c.JSON(http.StatusCreated, "Access to add item to basket")
 }
-
 //	@Summary		Обновление товара
 //	@Description	Update an existing item by its ID
 //	@Tags			items
@@ -436,14 +549,10 @@ func deleteItem(c *gin.Context) {
 
 		if err := db.Delete(&Item{}, "item_id = ?" , id).Error; err != nil {
 			handleError(c, http.StatusNotFound, "item not found")
-			//c.JSON(http.StatusNotFound, gin.H{"message": "item not found"})
 			return
 		} else {
 			handleError(c, http.StatusOK, "item deleted")
-			//c.JSON(http.StatusOK, gin.H{"message": "item deleted"})
 		}
-	//handleError(c, http.StatusNotFound, "item not found")
-	//c.JSON(http.StatusNotFound, gin.H{"message": "item not found"})
 }
 
 //	@Summary		Delete From Basket
@@ -452,33 +561,30 @@ func deleteItem(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		TokenAuth
-//	@Param			id	path		string	true	"Item ID"
+//	@Param			item_id	query		integer	true	"Item ID"
+//	@Param			user_id	query		integer	true	"User ID"
 //	@Success		200	{object}	map[string]string
 //	@Failure		404	{object}	map[string]string
-//	@Router			/id/1/basket/{id} [delete]
+//	@Router			/basket [delete]
 func deleteItemBasket(c *gin.Context) {
-	ItemId := c.Param("id")
+	
+	// Получаем user_id и item_id из URL-параметров
+	UserId := c.Query("user_id")
+	ItemId := c.Query("item_id")
+	//ItemId := c.Param("id")
 
-	var item OrderItem
-	if err := db.Where("itemid = ?", ItemId).First(&item).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			handleError(c, http.StatusNotFound, "item not found in basket")
-			//c.JSON(http.StatusNotFound, gin.H{"message": "item not found in basket"})
-		} else {
-			handleError(c, http.StatusInternalServerError, "failed to fetch basket item")
-			//c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to fetch basket item"})
-		}
+	//var item OrderItem
+	result := db.Where("itemid = ? AND user_id = ?", ItemId, UserId).Delete(&OrderItem{})
+	if result.RowsAffected == 0 {
+		handleError(c, http.StatusNotFound, "Item not found in basket")
+		return
+	}
+	if result.Error != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to remove item from basket")
 		return
 	}
 
-	if err := db.Delete(&item).Error; err != nil {
-		handleError(c, http.StatusInternalServerError, "failed to remove item from basket")
-		//c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to remove item from basket"})
-		return
-	}
-
-	handleError(c, http.StatusOK, "item removed from basket")
-	//c.JSON(http.StatusOK, gin.H{"message": "item removed from basket"})
+	handleError(c, http.StatusOK, "Item removed from basket")
 }
 
 //	@title						Bakery API
@@ -523,6 +629,7 @@ func main() {
     protected := router.Group("/")
 
 	router.POST("/login", login)
+	router.POST("/register",register)
     protected.Use(authMiddleware())
         {
 
@@ -531,7 +638,7 @@ func main() {
 			protected.GET("/itemsWT", getItemsWithTimeout)
 
 			// Получение всех товаров из корзины
-			protected.GET("/id/1/basket", getItemsBasket)
+			protected.GET("/basket/items", getItemsBasket)
 
 			// Получение товара по ID
 			protected.GET("/items/:id", getItemByID)
@@ -540,7 +647,7 @@ func main() {
 			protected.POST("/items", createItem)
 
 			// Добавление товара в корзину
-			protected.POST("/id/1/basket", createItemBasket)
+			protected.POST("/basket", createItemBasket)
 
 			// Обновление существующего товара
 			protected.PUT("/items/:id", updateItem)
@@ -549,7 +656,7 @@ func main() {
 			protected.DELETE("/items/:id", deleteItem)
 
 			// Удаление товара из корзины
-			protected.DELETE("/id/1/basket/:id", deleteItemBasket)
+			protected.DELETE("/basket", deleteItemBasket)
         }
 
 			// Создание задачи

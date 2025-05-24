@@ -9,49 +9,14 @@
     "host": "localhost:8080",
     "basePath": "/",
     "paths": {
-        "/id/1/basket": {
-            "get": {
-                "security": [
-                    {
-                        "TokenAuth": []
-                    }
-                ],
-                "description": "Retrieve a list of items in the basket for the current user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "basket"
-                ],
-                "summary": "Get Basket Items",
-                "responses": {
-                    "200": {
-                        "description": "List of items in the basket",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/main.OrderItem"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
+        "/basket": {
             "post": {
                 "security": [
                     {
                         "TokenAuth": []
                     }
                 ],
-                "description": "Add a new item to the user's basket",
+                "description": "Add a new item to the user's basket by user_id and item_id",
                 "consumes": [
                     "application/json"
                 ],
@@ -64,7 +29,21 @@
                 "summary": "Add To Basket",
                 "parameters": [
                     {
-                        "description": "Basket item",
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id1",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Item ID",
+                        "name": "item_id1",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Basket item details (e.g., quantity)",
                         "name": "item",
                         "in": "body",
                         "required": true,
@@ -99,9 +78,7 @@
                         }
                     }
                 }
-            }
-        },
-        "/id/1/basket/{id}": {
+            },
             "delete": {
                 "security": [
                     {
@@ -121,10 +98,17 @@
                 "summary": "Delete From Basket",
                 "parameters": [
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Item ID",
-                        "name": "id",
-                        "in": "path",
+                        "name": "item_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "query",
                         "required": true
                     }
                 ],
@@ -140,6 +124,64 @@
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/basket/items": {
+            "get": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
+                "description": "Возвращает список товаров в корзине по user_id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "basket"
+                ],
+                "summary": "Получить все позиции корзины пользователя",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID пользователя",
+                        "name": "user_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/main.OrderItem"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -485,6 +527,70 @@
                     }
                 }
             }
+        },
+        "/register": {
+            "post": {
+                "description": "Регистрирует нового пользователя с уникальным логином и хешированным паролем",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Регистрация нового пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные для регистрации (логин и пароль)",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/main.Credentials"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Пользователь успешно зарегистрирован",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный формат запроса",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Пользователь уже существует",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -508,10 +614,8 @@
                 "description": {
                     "type": "string"
                 },
-                "item_id": {
-                    "type": "string"
-                },
                 "name": {
+                    "description": "Itemid        string  `gorm:\"primaryKey;column:item_id\" json:\"item_id\"`",
                     "type": "string"
                 },
                 "price": {
@@ -526,13 +630,11 @@
             "type": "object",
             "properties": {
                 "item_id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "order_id": {
-                    "type": "string"
-                },
-                "orderitem_id": {
-                    "type": "string"
+                    "description": "OrderItemid   string  `gorm:\"primaryKey;column:orderitem_id\" json:\"orderitem_id\"`",
+                    "type": "integer"
                 },
                 "package_id": {
                     "type": "string"
@@ -548,6 +650,9 @@
                 },
                 "sum_price_package": {
                     "type": "number"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         }

@@ -13,9 +13,8 @@ definitions:
         type: string
       description:
         type: string
-      item_id:
-        type: string
       name:
+        description: Itemid        string  `gorm:"primaryKey;column:item_id" json:"item_id"`
         type: string
       price:
         type: integer
@@ -25,11 +24,11 @@ definitions:
   main.OrderItem:
     properties:
       item_id:
-        type: string
+        type: integer
       order_id:
-        type: string
-      orderitem_id:
-        type: string
+        description: OrderItemid   string  `gorm:"primaryKey;column:orderitem_id"
+          json:"orderitem_id"`
+        type: integer
       package_id:
         type: string
       quantity:
@@ -40,6 +39,8 @@ definitions:
         type: integer
       sum_price_package:
         type: number
+      user_id:
+        type: integer
     type: object
 host: localhost:8080
 info:
@@ -48,35 +49,58 @@ info:
   title: Bakery API
   version: "1.0"
 paths:
-  /id/1/basket:
-    get:
+  /basket:
+    delete:
       consumes:
       - application/json
-      description: Retrieve a list of items in the basket for the current user
+      description: Remove a item from the user's basket
+      parameters:
+      - description: Item ID
+        in: query
+        name: item_id
+        required: true
+        type: integer
+      - description: User ID
+        in: query
+        name: user_id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: List of items in the basket
+          description: OK
           schema:
-            items:
-              $ref: '#/definitions/main.OrderItem'
-            type: array
-        "500":
-          description: Internal Server Error
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
           schema:
-            type: string
+            additionalProperties:
+              type: string
+            type: object
       security:
       - TokenAuth: []
-      summary: Get Basket Items
+      summary: Delete From Basket
       tags:
       - basket
     post:
       consumes:
       - application/json
-      description: Add a new item to the user's basket
+      description: Add a new item to the user's basket by user_id and item_id
       parameters:
-      - description: Basket item
+      - description: User ID
+        in: query
+        name: user_id1
+        required: true
+        type: integer
+      - description: Item ID
+        in: query
+        name: item_id1
+        required: true
+        type: integer
+      - description: Basket item details (e.g., quantity)
         in: body
         name: item
         required: true
@@ -106,35 +130,41 @@ paths:
       summary: Add To Basket
       tags:
       - basket
-  /id/1/basket/{id}:
-    delete:
+  /basket/items:
+    get:
       consumes:
       - application/json
-      description: Remove a item from the user's basket
+      description: Возвращает список товаров в корзине по user_id
       parameters:
-      - description: Item ID
-        in: path
-        name: id
+      - description: ID пользователя
+        in: query
+        name: user_id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
+            items:
+              $ref: '#/definitions/main.OrderItem'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
             additionalProperties:
               type: string
             type: object
-        "404":
-          description: Not Found
+        "500":
+          description: Internal Server Error
           schema:
             additionalProperties:
               type: string
             type: object
       security:
       - TokenAuth: []
-      summary: Delete From Basket
+      summary: Получить все позиции корзины пользователя
       tags:
       - basket
   /items:
@@ -351,6 +381,49 @@ paths:
       security:
       - TokenAuth: []
       summary: login
+      tags:
+      - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует нового пользователя с уникальным логином и хешированным
+        паролем
+      parameters:
+      - description: Данные для регистрации (логин и пароль)
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/main.Credentials'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Пользователь успешно зарегистрирован
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректный формат запроса
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Пользователь уже существует
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Регистрация нового пользователя
       tags:
       - auth
 securityDefinitions:

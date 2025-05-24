@@ -26,6 +26,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/gin-contrib/cors"
+
 	_ "main/docs"
 
 	swaggerFiles "github.com/swaggo/files"
@@ -774,6 +776,8 @@ func main() {
 	initDB()
 	time.Sleep(10 * time.Second)
 	var router = gin.Default()
+	router.Use(cors.Default()) // разрешает все CORS-запросы
+	
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("http://45.90.35.111/swagger/doc.json")))
 	protected := router.Group("/")
 

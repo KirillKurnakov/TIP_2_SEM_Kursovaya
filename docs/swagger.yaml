@@ -551,6 +551,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - TokenAuth: []
       summary: Регистрация нового пользователя
       tags:
       - auth

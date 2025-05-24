@@ -696,6 +696,11 @@ const docTemplate = `{
         },
         "/register": {
             "post": {
+                "security": [
+                    {
+                        "TokenAuth": []
+                    }
+                ],
                 "description": "Регистрирует нового пользователя с уникальным логином и хешированным паролем",
                 "consumes": [
                     "application/json"

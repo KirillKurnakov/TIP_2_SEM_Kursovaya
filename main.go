@@ -772,11 +772,11 @@ func main() {
 	// log.Debug("Отладочная информация") — не будет выведено, если уровень Info
 
 	//router := gin.Default()
-	
+
 	initDB()
 	time.Sleep(10 * time.Second)
 	var router = gin.Default()
-	router.Use(cors.Default()) // разрешает все CORS-запросы
+	router.Use(cors.A()) // разрешает все CORS-запросы
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	protected := router.Group("/")

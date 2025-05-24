@@ -92,25 +92,6 @@ CREATE SEQUENCE public.order_id_seq
 ALTER SEQUENCE public.order_id_seq OWNER TO postgres;
 
 --
--- Name: order; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public."order" (
-    order_id integer DEFAULT nextval('public.order_id_seq'::regclass) NOT NULL,
-    user_id integer,
-    orderdate timestamp without time zone NOT NULL,
-    deliverytype_id character varying(5),
-    addressdelivery character varying(50) NOT NULL,
-    numberkilometer double precision NOT NULL,
-    deliveryprice double precision NOT NULL,
-    finalprice double precision NOT NULL,
-    orderstatus_id character varying(5)
-);
-
-
-ALTER TABLE public."order" OWNER TO postgres;
-
---
 -- Name: orderitem_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -142,6 +123,25 @@ CREATE TABLE public.order_items (
 
 
 ALTER TABLE public.order_items OWNER TO postgres;
+
+--
+-- Name: orders; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.orders (
+    order_id integer DEFAULT nextval('public.order_id_seq'::regclass) NOT NULL,
+    user_id integer,
+    orderdate timestamp without time zone NOT NULL,
+    deliverytype_id character varying(5),
+    addressdelivery character varying(50) NOT NULL,
+    numberkilometer double precision NOT NULL,
+    deliveryprice double precision NOT NULL,
+    finalprice double precision NOT NULL,
+    orderstatus_id character varying(5)
+);
+
+
+ALTER TABLE public.orders OWNER TO postgres;
 
 --
 -- Name: orderstatus; Type: TABLE; Schema: public; Owner: postgres
@@ -303,19 +303,6 @@ COPY public.items (item_id, name, category_id, description, price, quantity_stoc
 
 
 --
--- Data for Name: order; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public."order" (order_id, user_id, orderdate, deliverytype_id, addressdelivery, numberkilometer, deliveryprice, finalprice, orderstatus_id) FROM stdin;
-1	1	2024-11-05 10:00:00	D001	ул. Ленина, д. 1	5	300	55300	OS02
-2	2	2024-11-05 12:00:00	D002	ул. Советская, д. 15	10	600	45000	OS02
-3	3	2024-11-05 14:00:00	D003	ул. Мира, д. 8	0	0	14000	OS03
-4	4	2024-11-05 16:00:00	D002	ул. Победы, д. 23	7	400	300	OS03
-5	5	2024-11-05 18:00:00	D001	ул. Гагарина, д. 42	20	1500	9500	OS01
-\.
-
-
---
 -- Data for Name: order_items; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -324,6 +311,20 @@ COPY public.order_items (orderitem_id, order_id, itemid, quantity, sum_price_ite
 4	4	12	2	1700	PK003	1	1720	1
 5	5	13	1	850	PK005	1	850	1
 6	1	6	3	850	PK003	1	15	1
+7	\N	\N	\N	\N	\N	1	\N	1
+\.
+
+
+--
+-- Data for Name: orders; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.orders (order_id, user_id, orderdate, deliverytype_id, addressdelivery, numberkilometer, deliveryprice, finalprice, orderstatus_id) FROM stdin;
+1	1	2024-11-05 10:00:00	D001	ул. Ленина, д. 1	5	300	55300	OS02
+2	2	2024-11-05 12:00:00	D002	ул. Советская, д. 15	10	600	45000	OS02
+3	3	2024-11-05 14:00:00	D003	ул. Мира, д. 8	0	0	14000	OS03
+4	4	2024-11-05 16:00:00	D002	ул. Победы, д. 23	7	400	300	OS03
+5	5	2024-11-05 18:00:00	D001	ул. Гагарина, д. 42	20	1500	9500	OS01
 \.
 
 
@@ -428,7 +429,7 @@ SELECT pg_catalog.setval('public.order_id_seq', 5, true);
 -- Name: orderitem_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.orderitem_id_seq', 6, true);
+SELECT pg_catalog.setval('public.orderitem_id_seq', 7, true);
 
 
 --
@@ -463,10 +464,10 @@ ALTER TABLE ONLY public.items
 
 
 --
--- Name: order order_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: orders order_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public."order"
+ALTER TABLE ONLY public.orders
     ADD CONSTRAINT order_pkey PRIMARY KEY (order_id);
 
 
@@ -567,26 +568,26 @@ ALTER TABLE ONLY public.items
 
 
 --
--- Name: order order_deliverytype_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: orders order_deliverytype_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public."order"
+ALTER TABLE ONLY public.orders
     ADD CONSTRAINT order_deliverytype_id_fkey FOREIGN KEY (deliverytype_id) REFERENCES public.delivery(deliverytype_id);
 
 
 --
--- Name: order order_orderstatus_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: orders order_orderstatus_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public."order"
+ALTER TABLE ONLY public.orders
     ADD CONSTRAINT order_orderstatus_id_fkey FOREIGN KEY (orderstatus_id) REFERENCES public.orderstatus(orderstatus_id);
 
 
 --
--- Name: order order_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: orders order_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public."order"
+ALTER TABLE ONLY public.orders
     ADD CONSTRAINT order_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id);
 
 
@@ -603,7 +604,7 @@ ALTER TABLE ONLY public.order_items
 --
 
 ALTER TABLE ONLY public.order_items
-    ADD CONSTRAINT orderitem_order_id_fkey FOREIGN KEY (order_id) REFERENCES public."order"(order_id);
+    ADD CONSTRAINT orderitem_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id);
 
 
 --
@@ -619,7 +620,7 @@ ALTER TABLE ONLY public.order_items
 --
 
 ALTER TABLE ONLY public.payment
-    ADD CONSTRAINT payment_order_id_fkey FOREIGN KEY (order_id) REFERENCES public."order"(order_id);
+    ADD CONSTRAINT payment_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id);
 
 
 --

@@ -1,5 +1,7 @@
 basePath: /
 definitions:
+  main.CreateOrderRequest:
+    type: object
   main.Credentials:
     properties:
       password:
@@ -19,6 +21,30 @@ definitions:
       price:
         type: integer
       quantitystock:
+        type: integer
+    type: object
+  main.Order:
+    properties:
+      address_delivery:
+        type: string
+      delivery_price:
+        type: number
+      delivery_type_id:
+        type: string
+      final_price:
+        description: TimeDelivery    string  `gorm:"column:timedelivery" json:"time_delivery"`
+          // или time.Time если используешь TIME тип
+        type: number
+      number_kilometer:
+        type: number
+      order_date:
+        description: можно time.Time, если используешь time пакет
+        type: string
+      order_id:
+        type: integer
+      order_status_id:
+        type: string
+      user_id:
         type: integer
     type: object
   main.OrderItem:
@@ -383,6 +409,108 @@ paths:
       summary: login
       tags:
       - auth
+  /order:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a order from the catalog by its ID
+      parameters:
+      - description: Order ID
+        in: query
+        name: order_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message indicating successful deletion
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Item not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - TokenAuth: []
+      summary: Delete Order
+      tags:
+      - order
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список заказов по user_id
+      parameters:
+      - description: ID пользователя
+        in: query
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.Order'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - TokenAuth: []
+      summary: Получить все заказы пользователя
+      tags:
+      - order
+    post:
+      consumes:
+      - application/json
+      description: Add a new order with item details and user ID
+      parameters:
+      - description: Order creation payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Order created successfully
+          schema:
+            $ref: '#/definitions/main.Order'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to create order
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - TokenAuth: []
+      summary: Create order
+      tags:
+      - order
   /register:
     post:
       consumes:

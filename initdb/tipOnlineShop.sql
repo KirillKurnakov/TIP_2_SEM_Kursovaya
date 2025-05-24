@@ -48,11 +48,25 @@ CREATE TABLE public.delivery (
 ALTER TABLE public.delivery OWNER TO postgres;
 
 --
+-- Name: item_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.item_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.item_id_seq OWNER TO postgres;
+
+--
 -- Name: items; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.items (
-    item_id character varying(5) NOT NULL,
+    item_id integer DEFAULT nextval('public.item_id_seq'::regclass) NOT NULL,
     name text,
     category_id text,
     description text,
@@ -64,12 +78,59 @@ CREATE TABLE public.items (
 ALTER TABLE public.items OWNER TO postgres;
 
 --
--- Name: order; Type: TABLE; Schema: public; Owner: postgres
+-- Name: order_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public."order" (
-    order_id character varying(5) NOT NULL,
-    user_id character varying(5),
+CREATE SEQUENCE public.order_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.order_id_seq OWNER TO postgres;
+
+--
+-- Name: orderitem_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.orderitem_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.orderitem_id_seq OWNER TO postgres;
+
+--
+-- Name: order_items; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.order_items (
+    orderitem_id integer DEFAULT nextval('public.orderitem_id_seq'::regclass) NOT NULL,
+    order_id integer,
+    itemid integer,
+    quantity bigint,
+    sum_price_item bigint,
+    package_id text,
+    quantity_package bigint,
+    sum_price_package numeric,
+    user_id integer DEFAULT 1
+);
+
+
+ALTER TABLE public.order_items OWNER TO postgres;
+
+--
+-- Name: orders; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.orders (
+    order_id integer DEFAULT nextval('public.order_id_seq'::regclass) NOT NULL,
+    user_id integer,
     orderdate timestamp without time zone NOT NULL,
     deliverytype_id character varying(5),
     addressdelivery character varying(50) NOT NULL,
@@ -80,25 +141,7 @@ CREATE TABLE public."order" (
 );
 
 
-ALTER TABLE public."order" OWNER TO postgres;
-
---
--- Name: order_items; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.order_items (
-    orderitem_id character varying(5) NOT NULL,
-    order_id text,
-    itemid text,
-    quantity bigint,
-    sum_price_item bigint,
-    package_id text,
-    quantity_package bigint,
-    sum_price_package numeric
-);
-
-
-ALTER TABLE public.order_items OWNER TO postgres;
+ALTER TABLE public.orders OWNER TO postgres;
 
 --
 -- Name: orderstatus; Type: TABLE; Schema: public; Owner: postgres
@@ -132,7 +175,7 @@ ALTER TABLE public.package OWNER TO postgres;
 
 CREATE TABLE public.payment (
     payment_id character varying(5) NOT NULL,
-    order_id character varying(5),
+    order_id integer,
     paymentdate timestamp without time zone NOT NULL,
     paymenttype_id character varying(5),
     finalprice double precision NOT NULL,
@@ -164,28 +207,44 @@ CREATE TABLE public.review (
     comment character varying(100) NOT NULL,
     reviewdate timestamp without time zone NOT NULL,
     anonymous boolean NOT NULL,
-    item_id character varying(5)
+    item_id integer
 );
 
 
 ALTER TABLE public.review OWNER TO postgres;
 
 --
--- Name: user; Type: TABLE; Schema: public; Owner: postgres
+-- Name: user_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public."user" (
-    user_id character varying(5) NOT NULL,
-    name character varying(50) NOT NULL,
-    lastname character varying(50) NOT NULL,
-    surname character varying(50) NOT NULL,
-    email character varying(50) NOT NULL,
-    phone character varying(18) NOT NULL,
-    usertype_id character varying(5)
+CREATE SEQUENCE public.user_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.user_id_seq OWNER TO postgres;
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.users (
+    user_id integer DEFAULT nextval('public.user_id_seq'::regclass) NOT NULL,
+    name character varying(50),
+    lastname character varying(50),
+    surname character varying(50),
+    email character varying(50),
+    phone character varying(18),
+    usertype_id character varying(5) DEFAULT 'UT01'::character varying,
+    password character varying(2048),
+    login character varying(50)
 );
 
 
-ALTER TABLE public."user" OWNER TO postgres;
+ALTER TABLE public.users OWNER TO postgres;
 
 --
 -- Name: usertype; Type: TABLE; Schema: public; Owner: postgres
@@ -226,33 +285,20 @@ D003	Самовывоз	0	0	00:30:00
 --
 
 COPY public.items (item_id, name, category_id, description, price, quantity_stock) FROM stdin;
-I003	Кошка	C1	Мягкая игрушка в виде кошки	850	15
-I004	Птичка	C1	Мягкая игрушка в виде птички	850	15
-I005	Капибара	C1	Мягкая игрушка в виде капибары	850	15
-I006	Кружка с мишкой	C2	Прикольная кружка с мишкой	450	10
-I007	Кружка с собачкой	C2	Прикольная кружка с собачкой	450	10
-I008	Кружка с кошкой	C2	Прикольная кружка с кошкой	450	10
-I009	Кружка с птичкой	C2	Прикольная кружка с птичкой	450	10
-I0010	Кружка с капибарой	C2	Прикольная кружка с капибарой	450	10
-I0012	Кофта с собачкой	C3	Крутая кофта с собачкой	850	30
-I0013	Кофта с кошкой	C3	Крутая кофта с кошкой	850	30
-I0014	Кофта с птичкой	C3	Крутая кофта с птичкой	850	30
-I0015	Кофта с капибарой	C3	Крутая кофта с капибарой	850	30
-I0016	Мишка	C1	Мягкая игрушка в виде мишки	850	15
-I001	Мишка	C1	Красивая игрушка	850	15
-\.
-
-
---
--- Data for Name: order; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public."order" (order_id, user_id, orderdate, deliverytype_id, addressdelivery, numberkilometer, deliveryprice, finalprice, orderstatus_id) FROM stdin;
-O001	U001	2024-11-05 10:00:00	D001	ул. Ленина, д. 1	5	300	55300	OS02
-O002	U002	2024-11-05 12:00:00	D002	ул. Советская, д. 15	10	600	45000	OS02
-O003	U003	2024-11-05 14:00:00	D003	ул. Мира, д. 8	0	0	14000	OS03
-O004	U004	2024-11-05 16:00:00	D002	ул. Победы, д. 23	7	400	300	OS03
-O005	U005	2024-11-05 18:00:00	D001	ул. Гагарина, д. 42	20	1500	9500	OS01
+3	Кошка	C1	Мягкая игрушка в виде кошки	850	15
+4	Птичка	C1	Мягкая игрушка в виде птички	850	15
+5	Капибара	C1	Мягкая игрушка в виде капибары	850	15
+6	Кружка с мишкой	C2	Прикольная кружка с мишкой	450	10
+7	Кружка с собачкой	C2	Прикольная кружка с собачкой	450	10
+8	Кружка с кошкой	C2	Прикольная кружка с кошкой	450	10
+9	Кружка с птичкой	C2	Прикольная кружка с птичкой	450	10
+10	Кружка с капибарой	C2	Прикольная кружка с капибарой	450	10
+12	Кофта с собачкой	C3	Крутая кофта с собачкой	850	30
+13	Кофта с кошкой	C3	Крутая кофта с кошкой	850	30
+14	Кофта с птичкой	C3	Крутая кофта с птичкой	850	30
+15	Кофта с капибарой	C3	Крутая кофта с капибарой	850	30
+16	Мишка	C1	Мягкая игрушка в виде мишки	850	15
+1	Мишка	C1	Красивая игрушка	850	15
 \.
 
 
@@ -260,12 +306,25 @@ O005	U005	2024-11-05 18:00:00	D001	ул. Гагарина, д. 42	20	1500	9500	O
 -- Data for Name: order_items; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.order_items (orderitem_id, order_id, itemid, quantity, sum_price_item, package_id, quantity_package, sum_price_package) FROM stdin;
-OI002	O002	I006	1	450	PK005	1	450
-OI003	O003	I008	1	850	PK001	1	950
-OI004	O004	I0012	2	1700	PK003	1	1720
-OI005	O005	I0013	1	850	PK005	1	850
-OI006	O001	I006	3	850	PK003	1	15
+COPY public.order_items (orderitem_id, order_id, itemid, quantity, sum_price_item, package_id, quantity_package, sum_price_package, user_id) FROM stdin;
+3	3	8	1	850	PK001	1	950	1
+4	4	12	2	1700	PK003	1	1720	1
+5	5	13	1	850	PK005	1	850	1
+6	1	6	3	850	PK003	1	15	1
+7	\N	\N	\N	\N	\N	1	\N	1
+\.
+
+
+--
+-- Data for Name: orders; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.orders (order_id, user_id, orderdate, deliverytype_id, addressdelivery, numberkilometer, deliveryprice, finalprice, orderstatus_id) FROM stdin;
+1	1	2024-11-05 10:00:00	D001	ул. Ленина, д. 1	5	300	55300	OS02
+2	2	2024-11-05 12:00:00	D002	ул. Советская, д. 15	10	600	45000	OS02
+3	3	2024-11-05 14:00:00	D003	ул. Мира, д. 8	0	0	14000	OS03
+4	4	2024-11-05 16:00:00	D002	ул. Победы, д. 23	7	400	300	OS03
+5	5	2024-11-05 18:00:00	D001	ул. Гагарина, д. 42	20	1500	9500	OS01
 \.
 
 
@@ -319,24 +378,25 @@ PT03	СБП
 --
 
 COPY public.review (review_id, rating, comment, reviewdate, anonymous, item_id) FROM stdin;
-R001	5	Крутая игрушка!	2024-11-01 10:00:00	f	I001
-R002	4.5	Крутая крушка в подарок!	2024-11-02 12:00:00	t	I007
-R003	5	Мягкая и удобная кофта	2024-11-03 15:30:00	f	I0014
-R004	4	Ребенок рад!	2024-11-04 18:45:00	t	I004
-R005	5	Кружка топ!	2024-11-05 20:00:00	f	I007
+R001	5	Крутая игрушка!	2024-11-01 10:00:00	f	1
+R002	4.5	Крутая крушка в подарок!	2024-11-02 12:00:00	t	7
+R003	5	Мягкая и удобная кофта	2024-11-03 15:30:00	f	14
+R004	4	Ребенок рад!	2024-11-04 18:45:00	t	4
+R005	5	Кружка топ!	2024-11-05 20:00:00	f	7
 \.
 
 
 --
--- Data for Name: user; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public."user" (user_id, name, lastname, surname, email, phone, usertype_id) FROM stdin;
-U001	Иван	Иванов	Сергеевич	ivan.ivanov@example.com	89001234567	UT01
-U002	Ольга	Смирнова	Викторовна	olga.smirnova@example.com	89007654321	UT01
-U003	Анна	Кузнецова	Алексеевна	anna.kuznetsova@example.com	89006543210	UT02
-U004	Дмитрий	Петров	Иванович	dmitriy.petrov@example.com	89005432109	UT03
-U005	Мария	Васильева	Олеговна	maria.vasileva@example.com	89004321098	UT03
+COPY public.users (user_id, name, lastname, surname, email, phone, usertype_id, password, login) FROM stdin;
+1	Иван	Иванов	Сергеевич	ivan.ivanov@example.com	89001234567	UT01	\N	\N
+2	Ольга	Смирнова	Викторовна	olga.smirnova@example.com	89007654321	UT01	\N	\N
+3	Анна	Кузнецова	Алексеевна	anna.kuznetsova@example.com	89006543210	UT02	\N	\N
+4	Дмитрий	Петров	Иванович	dmitriy.petrov@example.com	89005432109	UT03	\N	\N
+5	Мария	Васильева	Олеговна	maria.vasileva@example.com	89004321098	UT03	\N	\N
+10	\N	\N	\N	\N	\N	\N	DSAADSADASDJdsjasdjdjasddsaj	kurnakov
 \.
 
 
@@ -349,6 +409,34 @@ UT01	Клиент
 UT02	Администратор
 UT03	Менеджер
 \.
+
+
+--
+-- Name: item_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.item_id_seq', 16, true);
+
+
+--
+-- Name: order_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.order_id_seq', 5, true);
+
+
+--
+-- Name: orderitem_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.orderitem_id_seq', 7, true);
+
+
+--
+-- Name: user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.user_id_seq', 10, true);
 
 
 --
@@ -376,10 +464,10 @@ ALTER TABLE ONLY public.items
 
 
 --
--- Name: order order_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: orders order_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public."order"
+ALTER TABLE ONLY public.orders
     ADD CONSTRAINT order_pkey PRIMARY KEY (order_id);
 
 
@@ -432,10 +520,26 @@ ALTER TABLE ONLY public.review
 
 
 --
--- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: order_items unique_item_id; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public."user"
+ALTER TABLE ONLY public.order_items
+    ADD CONSTRAINT unique_item_id UNIQUE (itemid);
+
+
+--
+-- Name: users user_login_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT user_login_key UNIQUE (login);
+
+
+--
+-- Name: users user_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
     ADD CONSTRAINT user_pkey PRIMARY KEY (user_id);
 
 
@@ -448,6 +552,14 @@ ALTER TABLE ONLY public.usertype
 
 
 --
+-- Name: order_items fk_orderitems_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.order_items
+    ADD CONSTRAINT fk_orderitems_user FOREIGN KEY (user_id) REFERENCES public.users(user_id);
+
+
+--
 -- Name: items item_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -456,27 +568,27 @@ ALTER TABLE ONLY public.items
 
 
 --
--- Name: order order_deliverytype_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: orders order_deliverytype_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public."order"
+ALTER TABLE ONLY public.orders
     ADD CONSTRAINT order_deliverytype_id_fkey FOREIGN KEY (deliverytype_id) REFERENCES public.delivery(deliverytype_id);
 
 
 --
--- Name: order order_orderstatus_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: orders order_orderstatus_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public."order"
+ALTER TABLE ONLY public.orders
     ADD CONSTRAINT order_orderstatus_id_fkey FOREIGN KEY (orderstatus_id) REFERENCES public.orderstatus(orderstatus_id);
 
 
 --
--- Name: order order_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: orders order_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public."order"
-    ADD CONSTRAINT order_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(user_id);
+ALTER TABLE ONLY public.orders
+    ADD CONSTRAINT order_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id);
 
 
 --
@@ -492,7 +604,7 @@ ALTER TABLE ONLY public.order_items
 --
 
 ALTER TABLE ONLY public.order_items
-    ADD CONSTRAINT orderitem_order_id_fkey FOREIGN KEY (order_id) REFERENCES public."order"(order_id);
+    ADD CONSTRAINT orderitem_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id);
 
 
 --
@@ -508,7 +620,7 @@ ALTER TABLE ONLY public.order_items
 --
 
 ALTER TABLE ONLY public.payment
-    ADD CONSTRAINT payment_order_id_fkey FOREIGN KEY (order_id) REFERENCES public."order"(order_id);
+    ADD CONSTRAINT payment_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id);
 
 
 --
@@ -528,10 +640,10 @@ ALTER TABLE ONLY public.review
 
 
 --
--- Name: user user_usertype_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users user_usertype_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public."user"
+ALTER TABLE ONLY public.users
     ADD CONSTRAINT user_usertype_id_fkey FOREIGN KEY (usertype_id) REFERENCES public.usertype(usertype_id);
 
 

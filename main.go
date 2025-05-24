@@ -177,6 +177,7 @@ func login(c *gin.Context) {
 // @Tags         auth
 // @Accept       json
 // @Produce      json
+// @Security     TokenAuth
 // @Param        user  body      Credentials  true  "Данные для регистрации (логин и пароль)"
 // @Success      201   {object}  map[string]string  "Пользователь успешно зарегистрирован"
 // @Failure      400   {object}  map[string]string  "Некорректный формат запроса"

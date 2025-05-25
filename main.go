@@ -796,6 +796,7 @@ func main() {
 		// Получение товара по ID
 		protected.GET("/items/:id", getItemByID)
 
+		
 		// Создание нового товара
 		protected.POST("/items", createItem)
 

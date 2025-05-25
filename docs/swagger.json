@@ -6,7 +6,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "https://45.90.35.111",
+    "host": "localhost:8080",
     "basePath": "/",
     "paths": {
         "/basket": {

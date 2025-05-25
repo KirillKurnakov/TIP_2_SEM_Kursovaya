@@ -48,6 +48,7 @@ jobs:
             sudo cp ./nginx/app.conf /etc/nginx/sites-available/app
             sudo ln -sf /etc/nginx/sites-available/app /etc/nginx/sites-enabled
 
+
             # Перезапускаем Nginx
             sudo systemctl reload nginx
 

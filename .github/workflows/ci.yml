@@ -50,7 +50,6 @@ jobs:
             # Копируем swagger.json
             sudo cp ./docs/swagger.json /var/www/html/swagger/doc.json
 
-
             # Обновляем nginx конфиг
             sudo cp ./nginx/app.conf /etc/nginx/sites-available/app
             sudo ln -sf /etc/nginx/sites-available/app /etc/nginx/sites-enabled

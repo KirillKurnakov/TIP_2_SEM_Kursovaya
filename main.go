@@ -771,14 +771,14 @@ func main() {
 	log.Error("Ошибка")
 	// log.Debug("Отладочная информация") — не будет выведено, если уровень Info
 
+	
 	//router := gin.Default()
-
 	initDB()
 	time.Sleep(10 * time.Second)
 	var router = gin.Default()
 	router.Use(cors.Default()) // разрешает все CORS-запросы
-
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("http://45.90.35.111/swagger/doc.json")))
 	protected := router.Group("/")
 
 	router.POST("/login", login)

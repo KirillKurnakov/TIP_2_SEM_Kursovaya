@@ -778,7 +778,7 @@ func main() {
 	var router = gin.Default()
 	//router.Use(cors.Default()) // разрешает все CORS-запросы
 	
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("http://45.90.35.111/swagger/doc.json")))
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	protected := router.Group("/")
 
 	router.POST("/login", login)
@@ -796,7 +796,7 @@ func main() {
 		// Получение товара по ID
 		protected.GET("/items/:id", getItemByID)
 
-		
+
 		// Создание нового товара
 		protected.POST("/items", createItem)
 
